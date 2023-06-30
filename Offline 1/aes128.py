@@ -1,5 +1,6 @@
 import numpy as np
 from BitVector import *
+import time
 
 sbox = np.array([0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
                  0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
@@ -18,7 +19,7 @@ sbox = np.array([0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x6
                  0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf,
                  0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16], dtype=np.uint8)
 
-inverseSbox = np.array([0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,
+invSbox = np.array([0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,
                         0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb,
                         0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d, 0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e,
                         0x08, 0x2e, 0xa1, 0x66, 0x28, 0xd9, 0x24, 0xb2, 0x76, 0x5b, 0xa2, 0x49, 0x6d, 0x8b, 0xd1, 0x25,
@@ -36,6 +37,18 @@ inverseSbox = np.array([0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x
                         0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d], dtype=np.uint8)
 
 rcon = np.array([0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36], dtype=np.uint8)
+
+fixedMatrix = np.array([[0x02, 0x03, 0x01, 0x01],
+                        [0x01, 0x02, 0x03, 0x01],
+                        [0x01, 0x01, 0x02, 0x03],
+                        [0x03, 0x01, 0x01, 0x02]], dtype=np.uint8)
+
+AES_modulus = BitVector(bitstring='100011011')
+
+invFixedMatrix = np.array([[0x0e, 0x0b, 0x0d, 0x09],
+                           [0x09, 0x0e, 0x0b, 0x0d],
+                           [0x0d, 0x09, 0x0e, 0x0b],
+                           [0x0b, 0x0d, 0x09, 0x0e]], dtype=np.uint8)
                 
 def convertToHex(asciiString):
     hexString = ""
@@ -71,6 +84,9 @@ def createByteMatrix(data):
 
     return byteMatrix
 
+
+    
+
 def createStateMatrix(blocks):
     for i in range(len(blocks)):
         blocks[i] = createByteMatrix(blocks[i])
@@ -87,24 +103,7 @@ def printListInHex(list):
     for i in range(len(list)):
         print(hex(list[i])[2:].zfill(2), end=" ")
     print()
-
-def addRoundKey(stateMatrix, keyMatrix):
-    for col in range(4):
-        for row in range(4):
-            stateMatrix[row][col] ^= keyMatrix[row][col]
-    return stateMatrix
-
-def subBytes(stateMatrix):
-    for col in range(4):
-        for row in range(4):
-            stateMatrix[row][col] = sbox[stateMatrix[row][col]]
-    return stateMatrix
-
-def shiftRows(stateMatrix):
-    for row in range(1, 4):
-        stateMatrix[row] = np.roll(stateMatrix[row], -row)
-    return stateMatrix
-
+                
 def g(lastCol, rconIndex):
     # rotate
     lastCol = np.roll(lastCol, -1)
@@ -131,18 +130,87 @@ def genRoundKeys(keyMatrix):
     
     #array of 11 round key matrices
     return roundKeys
-                
+
+def addRoundKey(stateMatrix, keyMatrix):
+    for col in range(4):
+        for row in range(4):
+            stateMatrix[row][col] ^= keyMatrix[row][col]
+    return stateMatrix
+
+def subBytes(stateMatrix):
+    for col in range(4):
+        for row in range(4):
+            stateMatrix[row][col] = sbox[stateMatrix[row][col]]
+    return stateMatrix
+
+def shiftRows(stateMatrix):
+    for row in range(1, 4):
+        stateMatrix[row] = np.roll(stateMatrix[row], -row)
+    return stateMatrix
+
+def mixColumns(stateMatrix):
+    tempMatrix = np.zeros((4, 4), dtype=np.uint8)
+    for row in range(4):
+        for col in range(4):
+            for i in range(4):
+                bv1 = BitVector(intVal=fixedMatrix[row][i], size=8)
+                bv2 = BitVector(intVal=stateMatrix[i][col], size=8)
+                bv3 = bv1.gf_multiply_modular(bv2, AES_modulus, 8)
+                tempMatrix[row][col] ^= bv3.intValue()
+    return tempMatrix
+                                
 def encryption(stateMatrices, roundKeys):
+    cipherText = ""
     for stateMatrix in stateMatrices:
         # round 0
         stateMatrix = addRoundKey(stateMatrix, roundKeys[0])
         for i in range(1, 11):
             stateMatrix = subBytes(stateMatrix)
             stateMatrix = shiftRows(stateMatrix)
-            
-            printMatrixInHex(stateMatrix)
-            
-        
+            # no mix columns in last round
+            if i != 10:
+                stateMatrix = mixColumns(stateMatrix)
+            stateMatrix = addRoundKey(stateMatrix, roundKeys[i])
+        # printMatrixInHex(stateMatrix)
+        cipherText += (''.join([chr(stateMatrix[row][col]) for col in range(4) for row in range(4)]))
+    return cipherText
+
+def invShiftRows(stateMatrix):
+    for row in range(1, 4):
+        stateMatrix[row] = np.roll(stateMatrix[row], row)
+    return stateMatrix
+
+def invSubBytes(stateMatrix):
+    for col in range(4):
+        for row in range(4):
+            stateMatrix[row][col] = invSbox[stateMatrix[row][col]]
+    return stateMatrix
+
+def invMixColumns(stateMatrix):
+    tempMatrix = np.zeros((4, 4), dtype=np.uint8)
+    for row in range(4):
+        for col in range(4):
+            for i in range(4):
+                bv1 = BitVector(intVal=invFixedMatrix[row][i], size=8)
+                bv2 = BitVector(intVal=stateMatrix[i][col], size=8)
+                bv3 = bv1.gf_multiply_modular(bv2, AES_modulus, 8)
+                tempMatrix[row][col] ^= bv3.intValue()
+    return tempMatrix
+
+def decryption(stateMatrices, roundKeys):
+    decipheredText = ""
+    for stateMatrix in stateMatrices:
+        # round 0
+        stateMatrix = addRoundKey(stateMatrix, roundKeys[10])
+        for i in range(9, -1, -1):
+            stateMatrix = invShiftRows(stateMatrix)
+            stateMatrix = invSubBytes(stateMatrix)
+            stateMatrix = addRoundKey(stateMatrix, roundKeys[i])
+            # no mix columns in last round (round 10, roundkey 0)
+            if i != 0:
+                stateMatrix = invMixColumns(stateMatrix)
+        decipheredText += (''.join([chr(stateMatrix[row][col]) for col in range(4) for row in range(4)]))
+    return decipheredText
 
 
 #! declare main?
@@ -152,8 +220,8 @@ N = 4
 # input key and plaintext
 # initialKey = input("Enter the secret key: ")
 # plainText = input("Enter the plain text: ")
-initialKey = "Thats my Kung Fu"
-plainText = "Two One Nine Two"
+initialKey = "BUET CSE18 Batch"
+plainText = "Can They Do This"
 
 print()
 print("Plain Text:\nIn ASCII: " + plainText + "\nIn Hex: " + convertToHex(plainText) + "\n")
@@ -162,14 +230,33 @@ print("Key:\nIn ASCII: " + initialKey + "\nIn Hex: " + convertToHex(initialKey) 
 # initial key matrix
 keyMatrix = createByteMatrix(initialKey)
 
+# generate round keys
+keySchedStart = time.time()
+roundKeys = genRoundKeys(keyMatrix)
+keySchedEnd = time.time()
+
 # process plaintext
 plainTextBlocks = divideIntoBlocks(plainText)
-stateMatrices = createStateMatrix(plainTextBlocks)
-
-# generate round keys
-roundKeys = genRoundKeys(keyMatrix)
+plainTextStateMatrices = createStateMatrix(plainTextBlocks)
 
 # encryotion
-encryption(stateMatrices, roundKeys)
+encryptionStart = time.time()
+cipherText = encryption(plainTextStateMatrices, roundKeys)
+encryptionEnd = time.time()
+print("Cipher Text:\nIn Hex: " + convertToHex(cipherText) + "\nIn ASCII: " + cipherText + "\n")
 
-# printMatrixInHex(stateMatrix)
+# process ciphertext
+cipherTextBlocks = divideIntoBlocks(cipherText)
+cipherTextStateMatrices = createStateMatrix(cipherTextBlocks)
+
+# decryption
+decryptionStart = time.time()
+decipheredText = decryption(cipherTextStateMatrices, roundKeys)
+decryptionEnd = time.time()
+print("Deciphered Text:\nIn Hex: " + convertToHex(decipheredText) + "\nIn ASCII: " + decipheredText + "\n")
+
+# print exec time details
+print("Key Scheduling: " + str(keySchedEnd - keySchedStart) + " seconds")
+print("Encryption: " + str(encryptionEnd - encryptionStart) + " seconds")
+print("Decryption: " + str(decryptionEnd - decryptionStart) + " seconds")
+print()
