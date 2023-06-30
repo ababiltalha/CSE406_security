@@ -212,51 +212,50 @@ def decryption(stateMatrices, roundKeys):
         decipheredText += (''.join([chr(stateMatrix[row][col]) for col in range(4) for row in range(4)]))
     return decipheredText
 
+def main():
+    # input key and plaintext
+    # initialKey = input("Enter the secret key: ")
+    # plainText = input("Enter the plain text: ")
+    initialKey = "BUET CSE18 Batch"
+    plainText = "Can They Do This"
 
-#! declare main?
-ROUNDS = 10
-N = 4
+    print()
+    print("Plain Text:\nIn ASCII: " + plainText + "\nIn Hex: " + convertToHex(plainText) + "\n")
+    print("Key:\nIn ASCII: " + initialKey + "\nIn Hex: " + convertToHex(initialKey) + "\n")
 
-# input key and plaintext
-# initialKey = input("Enter the secret key: ")
-# plainText = input("Enter the plain text: ")
-initialKey = "BUET CSE18 Batch"
-plainText = "Can They Do This"
+    # initial key matrix
+    keyMatrix = createByteMatrix(initialKey)
 
-print()
-print("Plain Text:\nIn ASCII: " + plainText + "\nIn Hex: " + convertToHex(plainText) + "\n")
-print("Key:\nIn ASCII: " + initialKey + "\nIn Hex: " + convertToHex(initialKey) + "\n")
+    # generate round keys
+    keySchedStart = time.time()
+    roundKeys = genRoundKeys(keyMatrix)
+    keySchedEnd = time.time()
 
-# initial key matrix
-keyMatrix = createByteMatrix(initialKey)
+    # process plaintext
+    plainTextBlocks = divideIntoBlocks(plainText)
+    plainTextStateMatrices = createStateMatrix(plainTextBlocks)
 
-# generate round keys
-keySchedStart = time.time()
-roundKeys = genRoundKeys(keyMatrix)
-keySchedEnd = time.time()
+    # encryotion
+    encryptionStart = time.time()
+    cipherText = encryption(plainTextStateMatrices, roundKeys)
+    encryptionEnd = time.time()
+    print("Cipher Text:\nIn Hex: " + convertToHex(cipherText) + "\nIn ASCII: " + cipherText + "\n")
 
-# process plaintext
-plainTextBlocks = divideIntoBlocks(plainText)
-plainTextStateMatrices = createStateMatrix(plainTextBlocks)
+    # process ciphertext
+    cipherTextBlocks = divideIntoBlocks(cipherText)
+    cipherTextStateMatrices = createStateMatrix(cipherTextBlocks)
 
-# encryotion
-encryptionStart = time.time()
-cipherText = encryption(plainTextStateMatrices, roundKeys)
-encryptionEnd = time.time()
-print("Cipher Text:\nIn Hex: " + convertToHex(cipherText) + "\nIn ASCII: " + cipherText + "\n")
+    # decryption
+    decryptionStart = time.time()
+    decipheredText = decryption(cipherTextStateMatrices, roundKeys)
+    decryptionEnd = time.time()
+    print("Deciphered Text:\nIn Hex: " + convertToHex(decipheredText) + "\nIn ASCII: " + decipheredText + "\n")
 
-# process ciphertext
-cipherTextBlocks = divideIntoBlocks(cipherText)
-cipherTextStateMatrices = createStateMatrix(cipherTextBlocks)
+    # print exec time details
+    print("Key Scheduling: " + str(keySchedEnd - keySchedStart) + " seconds")
+    print("Encryption: " + str(encryptionEnd - encryptionStart) + " seconds")
+    print("Decryption: " + str(decryptionEnd - decryptionStart) + " seconds")
+    print()
 
-# decryption
-decryptionStart = time.time()
-decipheredText = decryption(cipherTextStateMatrices, roundKeys)
-decryptionEnd = time.time()
-print("Deciphered Text:\nIn Hex: " + convertToHex(decipheredText) + "\nIn ASCII: " + decipheredText + "\n")
-
-# print exec time details
-print("Key Scheduling: " + str(keySchedEnd - keySchedStart) + " seconds")
-print("Encryption: " + str(encryptionEnd - encryptionStart) + " seconds")
-print("Decryption: " + str(decryptionEnd - decryptionStart) + " seconds")
-print()
+if __name__ == "__main__":
+    main()
