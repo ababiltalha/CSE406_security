@@ -2,6 +2,7 @@ import numpy as np
 from BitVector import *
 import time
 
+# sbox and Inverse sbox : for subBytes and invSubBytes
 sbox = np.array([0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
                  0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
                  0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15,
@@ -36,38 +37,46 @@ invSbox = np.array([0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 
                         0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0, 0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61,
                         0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d], dtype=np.uint8)
 
+# round constant array (10 for AES-128)
 rcon = np.array([0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36], dtype=np.uint8)
 
+# used in mixColumns step of key expansion, fixed matrix for encryption
 fixedMatrix = np.array([[0x02, 0x03, 0x01, 0x01],
                         [0x01, 0x02, 0x03, 0x01],
                         [0x01, 0x01, 0x02, 0x03],
                         [0x03, 0x01, 0x01, 0x02]], dtype=np.uint8)
 
+# used in mixColumns step of key expansion, dec = 283
 AES_modulus = BitVector(bitstring='100011011')
 
+# used in mixColumns step of key expansion, fixed matrix for decryption
 invFixedMatrix = np.array([[0x0e, 0x0b, 0x0d, 0x09],
                            [0x09, 0x0e, 0x0b, 0x0d],
                            [0x0d, 0x09, 0x0e, 0x0b],
                            [0x0b, 0x0d, 0x09, 0x0e]], dtype=np.uint8)
                 
+# convert ascii string to hex string
 def convertToHex(asciiString):
     hexString = ""
     for char in asciiString:
         hexString += hex(ord(char))[2:]
     return hexString
     
+# convert hex string to ascii string
 def convertToAscii(hexString):
     asciiString = ""
     for i in range(0, len(hexString), 2):
         asciiString += chr(int(hexString[i:i+2], 16))
     return asciiString
 
+# for dividing plaintext into blocks
 def divideIntoBlocks(data, blockSize = 16):
     blocks = []
     for i in range(0, len(data), blockSize):
         blocks.append(data[i:i+blockSize])
     return blocks
-    
+
+# generate 4x4 matrix from 16 byte string, if less, add padding of 0s
 def createByteMatrix(data):
     if len(data) < 16:
         # padding
@@ -84,14 +93,21 @@ def createByteMatrix(data):
 
     return byteMatrix
 
+# convert 16 byte integer to 16 byte string
+def convertIntToString(number):   
+    asciiString = ""
+    for i in range(16): 
+        asciiString += chr(number & 0xFF)
+        number >>= 8
+    return asciiString[::-1]
 
-    
-
+# make 4x4 matrix from 16 byte string
 def createStateMatrix(blocks):
     for i in range(len(blocks)):
         blocks[i] = createByteMatrix(blocks[i])
     return blocks
 
+# for debugging, print matrix in hex
 def printMatrixInHex(matrix):
     for row in range(4):
         for col in range(4):
@@ -99,11 +115,13 @@ def printMatrixInHex(matrix):
         print()
     print()
     
+# for debugging, print list in hex
 def printListInHex(list):
     for i in range(len(list)):
         print(hex(list[i])[2:].zfill(2), end=" ")
     print()
-                
+           
+# g(last column of previous matrix)     
 def g(lastCol, rconIndex):
     # rotate
     lastCol = np.roll(lastCol, -1)
@@ -114,6 +132,7 @@ def g(lastCol, rconIndex):
     lastCol[0] ^= rcon[rconIndex]
     return lastCol
 
+# key expansion
 def genRoundKeys(keyMatrix):
     roundKeys = np.zeros((11, 4, 4), dtype=np.uint8)
     roundKeys[0] = keyMatrix
@@ -124,6 +143,7 @@ def genRoundKeys(keyMatrix):
         lastCol = prevMatrix[:, 3]
         for k in range(4):
             if k == 0:
+                # first column of new matrix
                 roundKeys[i][:, k] = np.bitwise_xor(g(lastCol, i), prevMatrix[:, k])
             else:
                 roundKeys[i][:, k] = np.bitwise_xor(roundKeys[i][:, k-1], prevMatrix[:, k])
@@ -210,14 +230,16 @@ def decryption(stateMatrices, roundKeys):
             if i != 0:
                 stateMatrix = invMixColumns(stateMatrix)
         decipheredText += (''.join([chr(stateMatrix[row][col]) for col in range(4) for row in range(4)]))
+    # if deciphered text has trailing '0' characters, remove them (they are padding)
+    decipheredText = decipheredText.rstrip('0')
     return decipheredText
 
 def main():
     # input key and plaintext
-    # initialKey = input("Enter the secret key: ")
-    # plainText = input("Enter the plain text: ")
-    initialKey = "BUET CSE18 Batch"
-    plainText = "Can They Do This"
+    initialKey = input("Enter the secret key: ")
+    plainText = input("Enter the plain text: ")
+    # initialKey = "BUET CSE18 Batch"
+    # plainText = "Can They Do This"
 
     print()
     print("Plain Text:\nIn ASCII: " + plainText + "\nIn Hex: " + convertToHex(plainText) + "\n")

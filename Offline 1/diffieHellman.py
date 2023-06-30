@@ -23,7 +23,7 @@ def mulmod(a, b, c):
         b //= 2
     return x % c
 
-# Miller-Rabin primality test 
+# Miller-Rabin primality test (10 iterations)
 # True if p is prime, False if p is composite
 def MillerRabin(p, iteration = 10):
     if p < 2:
@@ -70,7 +70,7 @@ def genPrimitiveRoot(p, candidateMin = 2, candidateMax = (10**10 - 1)):
         if not (modulo(g, (p - 1) / p1, p) == 1) and not modulo(g, (p - 1) / p2, p) == 1: 
             return g
      
-# Generate secret private keys
+# Generate secret private keys a and b
 # primes of k/2 bits
 def genSecretPrivateKeys(k):
     a = genPrime(k/2)
@@ -79,13 +79,13 @@ def genSecretPrivateKeys(k):
         b = genPrime(k/2)
     return a, b
 
-# Generate public keys
+# Generate public keys A and B
 def genPublicKeys(p, g, a, b):
     A = modulo(g, a, p)
     B = modulo(g, b, p)
     return A, B
 
-# Generate shared secret key
+# Generate shared secret key s
 def genSharedSecretKey(p, A, b):
     return modulo(A, b, p)
 
@@ -126,7 +126,7 @@ def testDiffieHellman(k):
         if aliceSharedSecretKey != bobSharedSecretKey:
             print("Error: Shared secret keys do not match")
             break
-        # print("Shared secret key = " + str(aliceSharedSecretKey))
+    # return average time over 5 trials in milliseconds
     return round(pTime*1000/5, 6), round(gTime*1000/5, 6), round(abTime*1000/10, 6), round(ABTime*1000/10, 6), round(sTime*1000/5, 6)
     
         
