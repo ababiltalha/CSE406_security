@@ -1,4 +1,5 @@
 import numpy as np
+from BitVector import *
 
 sbox = np.array([0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
                  0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
@@ -48,6 +49,12 @@ def convertToAscii(hexString):
         asciiString += chr(int(hexString[i:i+2], 16))
     return asciiString
 
+def divideIntoBlocks(data, blockSize = 16):
+    blocks = []
+    for i in range(0, len(data), blockSize):
+        blocks.append(data[i:i+blockSize])
+    return blocks
+    
 def createByteMatrix(data):
     if len(data) < 16:
         # padding
@@ -63,6 +70,11 @@ def createByteMatrix(data):
             byteMatrix[row][col] = ord(data[col * 4 + row])
 
     return byteMatrix
+
+def createStateMatrix(blocks):
+    for i in range(len(blocks)):
+        blocks[i] = createByteMatrix(blocks[i])
+    return blocks
 
 def printMatrixInHex(matrix):
     for row in range(4):
@@ -86,6 +98,11 @@ def subBytes(stateMatrix):
     for col in range(4):
         for row in range(4):
             stateMatrix[row][col] = sbox[stateMatrix[row][col]]
+    return stateMatrix
+
+def shiftRows(stateMatrix):
+    for row in range(1, 4):
+        stateMatrix[row] = np.roll(stateMatrix[row], -row)
     return stateMatrix
 
 def g(lastCol, rconIndex):
@@ -115,7 +132,17 @@ def genRoundKeys(keyMatrix):
     #array of 11 round key matrices
     return roundKeys
                 
-                
+def encryption(stateMatrices, roundKeys):
+    for stateMatrix in stateMatrices:
+        # round 0
+        stateMatrix = addRoundKey(stateMatrix, roundKeys[0])
+        for i in range(1, 11):
+            stateMatrix = subBytes(stateMatrix)
+            stateMatrix = shiftRows(stateMatrix)
+            
+            printMatrixInHex(stateMatrix)
+            
+        
 
 
 #! declare main?
@@ -132,17 +159,17 @@ print()
 print("Plain Text:\nIn ASCII: " + plainText + "\nIn Hex: " + convertToHex(plainText) + "\n")
 print("Key:\nIn ASCII: " + initialKey + "\nIn Hex: " + convertToHex(initialKey) + "\n")
 
+# initial key matrix
 keyMatrix = createByteMatrix(initialKey)
-#! plaintext ke block e bhag kore prottek block er jnno eta korte hobe
 
-
-printMatrixInHex(keyMatrix)
-# printMatrixInHex(stateMatrix)
+# process plaintext
+plainTextBlocks = divideIntoBlocks(plainText)
+stateMatrices = createStateMatrix(plainTextBlocks)
 
 # generate round keys
 roundKeys = genRoundKeys(keyMatrix)
 
 # encryotion
-encryption()
+encryption(stateMatrices, roundKeys)
 
 # printMatrixInHex(stateMatrix)
