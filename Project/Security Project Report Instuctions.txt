@@ -1,0 +1,14 @@
+Project Scope:
+
+You need to thoroughly investigate the features of the assigned tools. If the scope of the assigned tool is too big, please contact your assigned supervisor to limit the scope of the features. Then, you need to run the tool in a virtual environment (Cloud VM or Local VM, or Docker). If the tool is open source, you have to understand the source code from a very high level. No need to understand the nitty-gritty details of the source code. Just get the overview of the full structure. You have to submit a report on the tool.
+
+Report Structure:
+
+Overview of the tool/framework
+A high-Level overview of the source code (If publicly available)
+Features short description
+Documentation to run each feature (You must document each feature in such detail so that anyone can run the feature on his own following your documentation. Give snapshots of each step)
+Snapshots of the demonstration of each feature
+Youtube unlisted video link of the demonstration of the features.
+You must use latex for the report
+You have to submit the latex source code in Moodle
