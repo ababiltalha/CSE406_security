@@ -21,7 +21,7 @@
 	\endgraf\bigskip
 	
 	\begin{center}
-		\Huge {{Report on Security Tool: ELK Stack} }\\\\
+		\Huge {{Report on EDR/SIEM Tool: ELK Stack} }\\\\
 		\vspace{0.5cm}
 		\large {CSE406: Computer Security Sessional}
 	\end{center}
@@ -230,11 +230,12 @@ Here's an overview of the flow and its components:
 
 \chapter{Features to be Demonstrated}
 The SIEM features for different contexts are implemented through integrations installed in the cloud deployment 
-(which we are accessing through the free trial) od Elastic Security.
-The features that we are going to demonstrate are as follows:
+(which we are accessing through the free trial) of Elastic Security.
+The features (integrations) that we have demonstrated are as follows:
 \begin{itemize}
-	\item \textbf{Network Packet Capture:} displays flow information about network connections on a host.
-	\item need to add
+	\item \textbf{Network Packet Capture} 
+	\item \textbf{Elastic Defend}
+        \item \textbf{Windows}
 \end{itemize}
 
 \chapter{Demonstration}
@@ -251,18 +252,21 @@ We can create a free trial deployment by signing up for a free trial account.
 		\label{fig:Sign Up}
 	\end{figure}
 	\item Create a deployment.
-	\begin{figure}[!h]
-		\centering
-		\includegraphics[width=0.5\textwidth]{Images/create-first-deployment.png}
-		\caption{Create Deployment}
-		\label{fig:Create Deployment}
-	\end{figure}
 	\item Save your elastic superuser credentials.
 	\begin{figure}[!h]
 		\centering
-		\includegraphics[width=0.7\textwidth]{Images/elastic-password.png}
-            \caption{Save Superuser Credentials}
-		\label{fig:Save Superuser Credentials}
+		\begin{minipage}{.45\textwidth}	
+			\centering	
+			\includegraphics[width=0.9\textwidth]{Images/create-first-deployment.png}
+			\caption{Create Deployment}
+			\label{fig:Create Deployment}
+		\end{minipage}\hfill
+		\begin{minipage}{.45\textwidth}
+			\centering
+			\includegraphics[width=0.9\textwidth]{Images/elastic-password.png}
+			\caption{Save Superuser Credentials}
+			\label{fig:Save Superuser Credentials}
+		\end{minipage}
 	\end{figure}
 	\item Once the deployment is ready, select continue.
 \end{itemize}
@@ -274,7 +278,25 @@ which manages the Elastic Agents that can be used to monitor a host system.
 \begin{itemize}
 	\item Log in to your cloud deployment, which will take you to Kibana Home.
 	\item Click Add Integrations.
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.7\textwidth]{Images/add-integration.png}
+		\caption{Add Integration}
+		\label{fig:Add Integration}
+	\end{figure}
 	\item Search and select the 'Network Packet Capture' integration.
+	\begin{figure}
+		\centering	
+		\includegraphics[width=0.7\textwidth]{Images/search-network-packet.png}
+		\caption{Search Integration}
+		\label{fig:Search Integration}
+	\end{figure}
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.7\textwidth]{Images/add-network-packet.png}
+		\caption{Add Network Packet Capture}
+		\label{fig:Select Integration}
+	\end{figure}
 	\item Click add and configure the integration with the following details:
 	\begin{itemize}
 		\item Integration name: Give the integration a name.
@@ -290,18 +312,52 @@ which manages the Elastic Agents that can be used to monitor a host system.
 \begin{itemize}
 	\item Follow the Install Elastic Agent on you host step. 
 	Pick the appropriate operating system and download and install your agent.
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.7\textwidth]{Images/install-elastic-agent.png}
+		\caption{Install Agent}
+		\label{fig:Install Agent}
+	\end{figure}
 	\item Once the agent is installed, the agent will automatically enroll with the Fleet Server.
 	It is shown in the Agent enrollment confirmed step.
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.7\textwidth]{Images/agent-enrollment-confirmed.png}
+		\caption{Agent Enrollment Confirmed}
+		\label{fig:Agent Enrollment Confirmed}
+	\end{figure}
 	\item Click on Add the integration at the bottom of the screen to proceed.
 	\item The only step remaining is to confirm the incoming data. Click on confirm and it will show a preview of the 
 	data Kibana is receiving.
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.7\textwidth]{Images/confirm-incoming-data.png}
+		\caption{Confirm Data}
+		\label{fig:Confirm Data}
+	\end{figure}
 	\item Click on View Assets to show the Dashboards under Network Packet Capture integration.
+	\begin {figure}
+		\centering
+		\includegraphics[width=0.7\textwidth]{Images/view-assets.png}
+		\caption{View Assets}
+		\label{fig:View Assets}
+	\end{figure}
 \end{itemize}
 
 \section{Dashboards}
 The dashboards are prepared using the data received from the agents installed in the host. 
 They are prepared using Kibana.
-The different dashboards we can visualize the packet data with are:
+
+\subsection{Network Packet Capture}
+Network Packet Capture is a network monitoring tool that captures and analyzes network traffic.
+This integration sniffs network packets on a host and dissects known protocols.
+
+Monitoring your network traffic is critical to gaining observability and securing your environment, 
+ensuring high levels of performance and security. 
+The Network Packet Capture integration captures the network traffic between your application servers, 
+decodes common application layer protocols and records the interesting fields for each transaction.
+
+The protocols for which the integration provides dashboards are:
 \begin{itemize}
 	\item Overview
 	\item DNS Overview
@@ -317,7 +373,105 @@ The different dashboards we can visualize the packet data with are:
 	\item TLS Sessions
 \end{itemize}
 Here are some of the screenshots taken of the dashboards.
+\begin{figure}
+	\centering
+	\includegraphics[width=0.7\textwidth]{Images/dashboard-overview.png}
+	\caption{Network Overview}
+	\label{fig:Overview}
+\end{figure}
+\begin{figure}
+	\centering
+	\includegraphics[width=0.7\textwidth]{Images/dashboard-dns.png}
+	\caption{DNS Overview}
+	\label{fig:DNS Overview}
+\end{figure}
+\begin{figure}
+	\centering
+	\includegraphics[width=0.7\textwidth]{Images/dashboard-dhcp.png}
+	\caption{DHCPv4}
+	\label{fig:DHCPv4}
+\end{figure}
+\begin{figure}
+	\centering
+	\includegraphics[width=0.7\textwidth]{Images/dashboard-flows.png}
+	\caption{Network Flows}
+	\label{fig:Network Flows}
+\end{figure}
+\begin{figure}
+	\centering
+	\includegraphics[width=0.7\textwidth]{Images/dashboard-http.png}
+	\caption{HTTP}
+	\label{fig:HTTP}
+\end{figure}
+\begin{figure}
+	\centering
+	\includegraphics[width=0.7\textwidth]{Images/dashboard-tls.png}
+	\caption{TLS Sessions}
+	\label{fig:TLS Sessions}
+\end{figure}
 
+\subsection{Elastic Defend}
+The Elastic Defend integration is used to monitor the host system.
+It has an alert section which shows the alerts generated by the system due to any malicious activity or vulnerability.
+Elastic Defend provides organizations with prevention, detection, and response capabilities with deep visibility 
+for EPP, EDR, SIEM, and Security Analytics use cases 
+across Windows, macOS, and Linux operating systems running on both traditional endpoints and public cloud environments.
+We can use it to:
+\begin{itemize}
+	\item Prevent complex attacks 
+	\item Alert in high fidelity
+	\item Detect threats in high fidelity
+	\item Triage and respond rapidly
+	\item Secure your cloud workloads
+	\item View terminal sessions
+\end{itemize}
+The figures show the Alerts page where the activity alert in accordance with the set rules are shown.
+The event triggering the alert can be analyzed and marked as Acknowledged or Resolved.
+
+\begin{figure}[!h]
+	\centering
+	\includegraphics[width=0.7\textwidth]{Images/alerts.png}
+	\caption{Alerts}
+	\label{fig:Alerts}
+\end{figure}
+\begin{figure}[!h]
+	\centering
+	\includegraphics[width=0.7\textwidth]{Images/analyze event.png}
+	\caption{Analyze Event}
+	\label{fig:Analyze Event}
+\end{figure}
+
+\subsection{Windows}
+The Windows integration is used to monitor a Windows operated host system.
+It collects metrics and logs from your machine. 
+Then that data is visualized in Kibana, 
+create alerts to notify you if something goes wrong, and reference data when troubleshooting an issue.
+
+For example, if we wanted to know if a Windows service unexpectedly stops running, 
+we could install the Windows integration to send service metrics to Elastic. 
+Then, we could view real-time changes to service status in Kibana's Services dashboard.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.7\textwidth]{Images/windows-services.png}
+	\caption{Windows Services}
+	\label{fig:Windows}
+\end{figure}
+
+\chapter{Limitations}
+We found a few limitations while trying to work with Elastic Security and ELK Stack.
+\begin{itemize}
+	\item The documentations and guidelines for using the security tools are fairly backdated
+	\item Not very beginner friendly
+	\item Does not ship with built-in mechanism for alerting
+	\item The app is designed for mostly enterprise purposes
+\end{itemize}
+
+\chapter{Conclusion}
+Elastic Security is a very powerful tool for security monitoring and analysis.
+Utilizing the integrations and the dashboards, we can monitor the host system and the network traffic.
+The dashboards provide a very detailed view of the system and the network.
+The alerts generated by the system can be analyzed and the event triggering the alert can be investigated.
+Overall, it provides a very comprehensive and expressive analysis as a EDR/SIEM tool.
 
 \end{document}
-
